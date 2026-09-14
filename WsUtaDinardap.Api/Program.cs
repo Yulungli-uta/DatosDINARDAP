@@ -17,6 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 // =========================================================
 builder.Services.Configure<DinardapOptions>(builder.Configuration.GetSection(DinardapOptions.SectionName));
 builder.Services.Configure<WsSeguOptions>(builder.Configuration.GetSection(WsSeguOptions.SectionName));
+builder.Services.Configure<NetworkTrustOptions>(builder.Configuration.GetSection(NetworkTrustOptions.SectionName));
 
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient();
@@ -88,6 +89,11 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseDinardapExceptionHandling();
+
+// Debe correr ANTES de UseAuthentication: si la IP esta en la lista de confianza y no viene
+// Authorization, arma la identidad sintetica; si SI viene un JWT real, este paso no hace nada
+// y el JWT se valida normalmente a continuacion.
+app.UseLegacyNetworkTrust();
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -239,7 +239,7 @@
   <p class="subtitle">Estructura real dejada en <code class="mono">D:\Git_repository\DatosDINARDAP</code> tras separar el consumo SOAP de DINARDAP en un gateway propio (<code class="mono">WsUtaDinardap.Api</code>), sin romper el contrato público de la DLL legacy que ya consumen los sistemas institucionales.</p>
   <div class="status-strip">
     <span class="pill ok">✓ 4 proyectos compilan (dotnet build / MSBuild)</span>
-    <span class="pill ok">✓ 24 / 24 pruebas en verde</span>
+    <span class="pill ok">✓ 34 / 34 pruebas en verde</span>
     <span class="pill ok">✓ Permisos + Application creados en WsSegu</span>
     <span class="pill warn">— Sin prueba en vivo contra DINARDAP real</span>
     <span class="pill">git 2 commits, sin push</span>
@@ -328,14 +328,12 @@
           <!-- edges -->
           <path class="edge" d="M95,72 L95,120"></path>
           <path class="edge" d="M180,146 C260,180 300,195 325,208"></path>
-          <text class="edge-label" x="185" y="185">HTTP + Bearer (token técnico)</text>
+          <text class="edge-label" x="150" y="185">HTTP sin token</text>
+          <text class="edge-label" x="150" y="198">(confianza por IP)</text>
 
           <path class="edge" d="M825,72 L825,120"></path>
           <path class="edge" d="M740,146 C660,180 620,195 595,208"></path>
           <text class="edge-label" x="640" y="185">HTTP + Bearer</text>
-
-          <path class="edge" d="M95,72 C170,90 320,55 360,46"></path>
-          <text class="edge-label" x="150" y="66">Client Credentials</text>
 
           <path class="edge" d="M825,72 C740,95 590,55 560,46"></path>
 
@@ -343,7 +341,7 @@
           <text class="edge-label" x="470" y="292">único gateway SOAP</text>
         </svg>
       </div>
-      <p class="lede">El sistema legacy obtiene su propio token vía Client Credentials contra WsSegu (identidad técnica <code class="mono">datosdinardap-legacy</code>); un sistema nuevo reenvía el JWT del usuario o usa su propia identidad técnica. Ninguno de los dos habla SOAP directamente — eso vive únicamente en <code class="mono">DinardapSoapGateway</code>.</p>
+      <p class="lede">El sistema legacy <b>no lleva ninguna credencial</b> — <code class="mono">WsUtaDinardap.Api</code> confía la llamada según la IP de origen del servidor (<code class="mono">LegacyNetworkTrust</code>), porque la DLL se referencia en muchos proyectos, incluidas máquinas de desarrollador, y repartir un secreto ahí sería peor que no tener ninguno. Un sistema nuevo sí reenvía el JWT del usuario o usa su propia identidad técnica contra WsSegu. Ninguno de los dos habla SOAP directamente — eso vive únicamente en <code class="mono">DinardapSoapGateway</code>.</p>
     </section>
 
     <section id="estructura">
@@ -366,6 +364,7 @@
 │   ├── Infrastructure/
 │   │   ├── Dinardap/  <span class="dim">DinardapOptions · DinardapSoapGateway · InteroperadorProxy</span>
 │   │   ├── Security/  <span class="dim">JwksKeyResolver · UserActionPermissionService · RequirePermission…</span>
+│   │   │              <span class="dim">NetworkTrustMiddleware · NetworkTrustOptions · IpNetworkMatcher</span>
 │   │   └── ErrorHandling/DinardapExceptionMiddleware.cs
 │   ├── Endpoints/DinardapEndpoints.cs
 │   └── appsettings.json <span class="dim">(gitignored) · appsettings.example.json (versionado)</span>
@@ -414,7 +413,7 @@
         </div>
         <div class="card">
           <span class="card-title">WsUtaDinardap.Api.Tests</span>
-          <span class="card-desc">xUnit · 24 pruebas sobre el mapeo de campos de los 3 paquetes y el enrutamiento del orquestador, sin red.</span>
+          <span class="card-desc">xUnit · 34 pruebas sobre el mapeo de campos de los 3 paquetes y el enrutamiento del orquestador, sin red.</span>
         </div>
       </div>
 
@@ -478,7 +477,7 @@ public TCE             DatosTCE(string codigo)            <span class="dim-line"
 <span class="dim-line">(sin remoto configurado — commits solo locales, sin push)</span></pre>
       </div>
 
-      <h3>Qué cubren las 24 pruebas</h3>
+      <h3>Qué cubren las 34 pruebas</h3>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Archivo</th><th>Casos</th><th>Verifica</th></tr></thead>
@@ -487,6 +486,7 @@ public TCE             DatosTCE(string codigo)            <span class="dim-line"
             <tr><td><code>TcePackageHandlerTests</code></td><td class="num">3</td><td>Sufragó / no sufragó, y el caso "sin dato" ahora honesto (<code>null</code>, no <code>false</code> por defecto)</td></tr>
             <tr><td><code>TitulosPackageHandlerTests</code></td><td class="num">9</td><td>Clasificación de nivel (2/3/4) para los 6 nombres reales de DINARDAP, fecha corta/ausente, lista vacía nunca null</td></tr>
             <tr><td><code>DinardapServiceTests</code></td><td class="num">5</td><td>Identificación inválida lanza <code>InvalidIdentification</code>, cada método consulta el paquete correcto, fallas del gateway se propagan tipadas</td></tr>
+            <tr><td><code>IpNetworkMatcherTests</code></td><td class="num">10</td><td>CIDR (/24, /28, /32 exacto), IP fuera de rango, múltiples redes, lista vacía y dirección nula nunca confían</td></tr>
           </tbody>
         </table>
       </div>
@@ -503,13 +503,14 @@ public TCE             DatosTCE(string codigo)            <span class="dim-line"
             <tr><td><code>auth.tbl_Permissions</code></td><td><code>DINARDAP.REGISTRO_CIVIL.READ</code></td></tr>
             <tr><td><code>auth.tbl_Permissions</code></td><td><code>DINARDAP.TCE.READ</code></td></tr>
             <tr><td><code>auth.tbl_Permissions</code></td><td><code>DINARDAP.TITULOS.READ</code></td></tr>
-            <tr><td><code>auth.tbl_Applications</code></td><td><code>datosdinardap-legacy</code> (Client Credentials, IsActive=1)</td></tr>
-            <tr><td><code>auth.tbl_Roles</code></td><td><code>R_DINARDAP_LEGACY</code></td></tr>
+            <tr><td><code>auth.tbl_Applications</code></td><td><code>datosdinardap-legacy</code> — <span style="color:var(--warn)">creada, luego DESACTIVADA</span> (ver nota abajo)</td></tr>
+            <tr><td><code>auth.tbl_Roles</code></td><td><code>R_DINARDAP_LEGACY</code> — sigue en uso, ahora asignado por <code>LegacyNetworkTrust</code></td></tr>
             <tr><td><code>auth.tbl_RolePermissions</code></td><td>3 filas: <code>R_DINARDAP_LEGACY</code> → los 3 permisos DINARDAP</td></tr>
           </tbody>
         </table>
       </div>
-      <div class="notice">Al verificar el mapeo <code class="mono">AppAuth:ClientRoles</code> en <code class="mono">RepositoryUta/Configuration/appsettings.json</code> se encontró ese bloque anidado por error dentro de <code class="mono">Serilog:WriteTo[1]</code> — en esa ruta nunca se leía, así que <code class="mono">uta-signature</code> tampoco recibía su rol ahí. <code class="mono">appsettings.Production.json</code> sí lo tenía bien ubicado (producción no estaba afectada). Se corrigió la posición y se agregó <code class="mono">datosdinardap-legacy → R_DINARDAP_LEGACY</code> en ambos archivos; RepositoryUta recompiló sin errores después del cambio.</div>
+      <div class="notice">Al verificar el mapeo <code class="mono">AppAuth:ClientRoles</code> en <code class="mono">RepositoryUta/Configuration/appsettings.json</code> se encontró ese bloque anidado por error dentro de <code class="mono">Serilog:WriteTo[1]</code> — en esa ruta nunca se leía, así que <code class="mono">uta-signature</code> tampoco recibía su rol ahí. <code class="mono">appsettings.Production.json</code> sí lo tenía bien ubicado (producción no estaba afectada). Se corrigió la posición; el mapeo a <code class="mono">R_DINARDAP_LEGACY</code> quedó sin uso tras el cambio de diseño de abajo, pero se deja documentado por si se reactiva el flujo Client Credentials más adelante.</div>
+      <div class="notice warn"><b>Cambio de diseño (decisión del usuario):</b> como <code class="mono">DatosDINARDAP.dll</code> se referencia en muchos proyectos — incluidas máquinas de desarrollador — repartir el secreto de <code class="mono">datosdinardap-legacy</code> a cada una era peor que no tener ninguno (un <code class="mono">.dll</code> se descompila en segundos con herramientas gratuitas). Se reemplazó por <b>confianza por red</b> (<code class="mono">LegacyNetworkTrust</code> en <code class="mono">WsUtaDinardap.Api</code>): la API confía la llamada según la IP de origen, sin token. La <code class="mono">Application datosdinardap-legacy</code> se <b>desactivó</b> (<code class="mono">IsActive=0</code>) en vez de borrarse, por si se necesita reactivar el flujo con token en el futuro. El rol <code class="mono">R_DINARDAP_LEGACY</code> y sus permisos siguen vigentes — ahora se los asigna el middleware de confianza por red, no un JWT.</div>
     </section>
 
     <section id="config">
@@ -520,8 +521,9 @@ public TCE             DatosTCE(string codigo)            <span class="dim-line"
           <thead><tr><th>Dónde</th><th>Clave</th><th>Valor</th></tr></thead>
           <tbody>
             <tr><td><code>WsUtaDinardap.Api</code></td><td><code>Dinardap:Username</code> / <code>:Password</code></td><td>Variables de entorno — vacías en <code>appsettings.example.json</code> a propósito</td></tr>
-            <tr><td><code>DatosDINARDAP</code> (legacy)</td><td><code>WSUTADINARDAP_CLIENT_SECRET</code></td><td>Variable de entorno del host legacy — secreto entregado fuera de este documento</td></tr>
-            <tr><td>Ambos</td><td><code>AuthService:Url</code> / <code>WsUtaDinardapApi.AuthServiceUrl</code></td><td>URL real de RepositoryUta en cada ambiente</td></tr>
+            <tr><td><code>WsUtaDinardap.Api</code></td><td><code>LegacyNetworkTrust:AllowedNetworks</code></td><td>Rangos CIDR de la red interna real (ej. <code>10.102.12.0/24</code>) — hoy es un valor asumido, confirmar</td></tr>
+            <tr><td><code>WsUtaDinardap.Api</code></td><td><code>AuthService:Url</code></td><td>URL real de RepositoryUta (solo la API la necesita — la DLL legacy ya no habla con WsSegu)</td></tr>
+            <tr><td><code>DatosDINARDAP</code> (legacy)</td><td><code>WsUtaDinardapApi.BaseUrl</code></td><td>URL real de <code>WsUtaDinardap.Api</code> — <b>sin secretos que configurar del lado de la DLL</b></td></tr>
           </tbody>
         </table>
       </div>
@@ -604,7 +606,7 @@ Newtonsoft.Json.dll           <span class="accent-line">← dependencia NUEVA �
 DatosDINARDAP.pdb             <span class="dim-line">← opcional, solo para depurar</span>
 DatosDINARDAP.dll.config       <span class="dim-line">← NO se usa tal cual: ver nota abajo</span></pre>
       </div>
-      <div class="notice warn"><b>Ojo con la configuración:</b> <code class="mono">DatosDINARDAP.dll.config</code> es un archivo auxiliar que genera el build de una librería — en tiempo de ejecución <b>no se lee</b>. Los <code class="mono">appSettings</code> nuevos (<code class="mono">WsUtaDinardapApi.BaseUrl</code>, <code class="mono">.AuthServiceUrl</code>, <code class="mono">.ClientId</code>) hay que copiarlos manualmente dentro del <code class="mono">web.config</code> o <code class="mono">app.config</code> **del sistema consumidor**, apuntando a las URLs reales. Y en ese mismo host, dejar configurada la variable de entorno <code class="mono">WSUTADINARDAP_CLIENT_SECRET</code>.</div>
+      <div class="notice warn"><b>Ojo con la configuración:</b> <code class="mono">DatosDINARDAP.dll.config</code> es un archivo auxiliar que genera el build de una librería — en tiempo de ejecución <b>no se lee</b>. El único <code class="mono">appSettings</code> nuevo (<code class="mono">WsUtaDinardapApi.BaseUrl</code>) hay que copiarlo manualmente dentro del <code class="mono">web.config</code> o <code class="mono">app.config</code> <b>del sistema consumidor</b>, apuntando a la URL real. <b>Nada de secretos ni variables de entorno de este lado</b> — la DLL no lleva credencial, la API la confía por IP de origen (ver sección de Autorización).</div>
       <p><b>Qué subir de verdad:</b> <code class="mono">DatosDINARDAP.dll</code> + <code class="mono">Newtonsoft.Json.dll</code> al <code class="mono">bin\</code> de cada sistema institucional que use esta DLL, más la edición manual de su config como se explica arriba.</p>
 
       <h3>3 · DatosDINARDAP.Client — no se "sube" a ningún servidor</h3>
