@@ -526,7 +526,36 @@ public TCE             DatosTCE(string codigo)            <span class="dim-line"
         </table>
       </div>
       <div class="notice">Ya existe <code class="mono">WsUtaDinardap.Api/appsettings.Production.json</code> en el proyecto, listo para copiar al servidor junto con el resto de <code class="mono">publish/</code>. Sigue el mismo patrón que RepositoryUta: <b>no está en git</b> (mismo <code class="mono">.gitignore</code> que excluye todo <code class="mono">appsettings.*.json</code> salvo <code class="mono">.example.json</code>), y los campos de secreto llevan el literal <code class="mono">"VARIABLE_DE_ENTORNO"</code> en vez de un valor — hay que reemplazarlos antes de subirlo, o dejarlos así y setear las variables de entorno reales en el servidor (cualquiera de las dos formas funciona, ASP.NET Core las combina). El único valor que asumí sin confirmación tuya es <code class="mono">AuthService:Url = https://serviciospruebas.uta.edu.ec/WsSeguUta</code> — corrígemelo si el ambiente real es otro.</div>
-      <div class="notice"><code class="mono">docs/configurar-variables-entorno.ps1</code> — script de PowerShell para crear estas variables a nivel de máquina en el servidor (ejecutar como Administrador, en el servidor real, no en local). Trae los 2 bloques (API y DLL legacy) comentados/con placeholders a propósito — nunca lleva secretos reales escritos, y tras correrlo hay que reciclar el Application Pool de IIS para que el proceso los vea. También documenta la alternativa de definirlas en el <code class="mono">web.config</code> por sitio en vez de a nivel de máquina.</div>
+      <div class="notice"><code class="mono">docs/configurar-variables-entorno.ps1</code> — plantilla de PowerShell con placeholders, versionada en git. <code class="mono">docs/configurar-variables-entorno.local.ps1</code> — la misma con los valores reales ya completados, <b>excluida del repositorio a propósito</b> (<code class="mono">.gitignore: *.local.ps1</code>) — nunca viaja con git, se genera/copia por fuera. Ejecutar como Administrador en el servidor real; tras correrla hay que reciclar el Application Pool de IIS para que el proceso vea las variables nuevas.</div>
+
+      <h3>Alternativa por sitio en IIS (en vez de variables de máquina)</h3>
+      <p>Más quirúrgico que una variable de entorno global: se define solo para la aplicación de <code class="mono">WsUtaDinardap.Api</code>, editando el <code class="mono">web.config</code> que genera <code class="mono">dotnet publish</code> — ese archivo vive en el servidor, nunca en git.</p>
+      <div class="code-block">
+        <div class="code-head"><span>web.config del sitio — bloque &lt;aspNetCore&gt;</span><span>XML</span></div>
+        <pre>&lt;aspNetCore processPath="dotnet" arguments=".\WsUtaDinardap.Api.dll" ...&gt;
+  &lt;environmentVariables&gt;
+    &lt;environmentVariable name="Dinardap__Username" value="&lt;usuario_real&gt;" /&gt;
+    &lt;environmentVariable name="Dinardap__Password" value="&lt;password_real&gt;" /&gt;
+  &lt;/environmentVariables&gt;
+&lt;/aspNetCore&gt;</pre>
+      </div>
+      <p>O por línea de comandos, sin abrir el archivo a mano (ajustar <code class="mono">SiteName/RutaApp</code> al nombre real del sitio/subaplicación en IIS):</p>
+      <div class="code-block">
+        <div class="code-head"><span>appcmd — agrega una variable sin editar el XML directamente</span><span>terminal, como Administrador</span></div>
+        <pre>%windir%\system32\inetsrv\appcmd.exe set config "SiteName/RutaApp" ^
+  -section:system.webServer/aspNetCore ^
+  /+"environmentVariables.[name='Dinardap__Username',value='&lt;usuario_real&gt;']" ^
+  /commit:apphost
+
+%windir%\system32\inetsrv\appcmd.exe set config "SiteName/RutaApp" ^
+  -section:system.webServer/aspNetCore ^
+  /+"environmentVariables.[name='Dinardap__Password',value='&lt;password_real&gt;']" ^
+  /commit:apphost
+
+<span class="dim-line">:: recicla el Application Pool para que tome efecto</span>
+%windir%\system32\inetsrv\appcmd.exe recycle apppool "NombreDelAppPool"</pre>
+      </div>
+      <div class="notice warn">Ambos, el <code class="mono">web.config</code> y el comando <code class="mono">appcmd</code>, quedan del lado del servidor con los valores reales — no se versionan en git de ninguna forma (son archivos/estado de la instancia de IIS, no del código fuente).</div>
     </section>
 
     <section id="compilar">

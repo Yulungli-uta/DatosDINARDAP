@@ -26,6 +26,8 @@ appsettings.json
 *.pem
 *.key
 secrets/
+*.local.ps1
+*.secrets.ps1
 
 ## OS
 Thumbs.db
