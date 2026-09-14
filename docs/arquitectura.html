@@ -257,6 +257,7 @@
       <li><a href="#evidencia">Evidencia de build/tests</a></li>
       <li><a href="#basedatos">Cambios en WsSegu</a></li>
       <li><a href="#config">Configuración y secretos</a></li>
+      <li><a href="#compilar">Compilar y qué subir</a></li>
       <li><a href="#pendiente">Qué queda pendiente</a></li>
     </ol>
   </nav>
@@ -523,6 +524,80 @@ public TCE             DatosTCE(string codigo)            <span class="dim-line"
             <tr><td>Ambos</td><td><code>AuthService:Url</code> / <code>WsUtaDinardapApi.AuthServiceUrl</code></td><td>URL real de RepositoryUta en cada ambiente</td></tr>
           </tbody>
         </table>
+      </div>
+    </section>
+
+    <section id="compilar">
+      <span class="kicker">09 — Despliegue</span>
+      <h2>Cómo compilar cada proyecto y qué archivos subir</h2>
+      <p class="lede">Comandos reales, corridos en esta sesión (Release, no Debug), con el listado real de lo que queda en la carpeta de salida — no una lista supuesta.</p>
+
+      <h3>1 · WsUtaDinardap.Api — se publica en el servidor</h3>
+      <div class="code-block">
+        <div class="code-head"><span>Compilar / publicar</span><span>terminal</span></div>
+        <pre>cd WsUtaDinardap.Api
+dotnet publish -c Release -o ./publish</pre>
+      </div>
+      <p>Antes de publicar: reemplazar/completar <code class="mono">appsettings.Production.json</code> (o exportar las variables de entorno <code class="mono">Dinardap__Username</code>, <code class="mono">Dinardap__Password</code>, <code class="mono">AuthService__Url</code> en el servidor — ver sección <a href="#config">Configuración</a>).</p>
+      <div class="code-block">
+        <div class="code-head"><span>Contenido real de ./publish (verificado en esta sesión)</span><span>32 archivos</span></div>
+        <pre>WsUtaDinardap.Api.dll            <span class="dim-line">← el ensamblado de la app</span>
+WsUtaDinardap.Api.exe             <span class="dim-line">← host standalone (o usar el .dll con "dotnet")</span>
+WsUtaDinardap.Api.deps.json
+WsUtaDinardap.Api.runtimeconfig.json
+WsUtaDinardap.Api.staticwebassets.endpoints.json
+web.config                        <span class="dim-line">← generado para IIS (ASP.NET Core Module)</span>
+appsettings.json                  <span class="accent-line">← reemplazar por el real antes de subir, o usar variables de entorno</span>
+appsettings.Development.json      <span class="dim-line">← no hace falta en el servidor, se puede omitir</span>
+appsettings.example.json          <span class="dim-line">← solo referencia, no hace falta en el servidor</span>
+
+<span class="dim-line">Dependencias (se copian solas con dotnet publish, no hay que tocarlas):</span>
+Microsoft.AspNetCore.Authentication.JwtBearer.dll
+Microsoft.IdentityModel.*.dll  (6 archivos — validación JWT)
+Microsoft.OpenApi.dll · Microsoft.AspNetCore.OpenApi.dll
+System.ServiceModel*.dll  (5 archivos — cliente SOAP hacia DINARDAP)
+System.IdentityModel.Tokens.Jwt.dll
+cs/ de/ es/ fr/ it/ ja/ ko/ pl/ pt-BR/ ru/ tr/ zh-Hans/ zh-Hant/  <span class="dim-line">← carpetas de recursos de idioma, se pueden omitir</span></pre>
+      </div>
+      <p><b>Qué subir de verdad:</b> toda la carpeta <code class="mono">publish/</code> tal cual (menos las carpetas de idioma y los <code class="mono">appsettings.*.json</code> que no correspondan al ambiente real) a la ruta de la aplicación en IIS.</p>
+
+      <h3>2 · DatosDINARDAP (legacy) — se copia al bin de cada sistema consumidor</h3>
+      <div class="code-block">
+        <div class="code-head"><span>Compilar (Release, .NET Framework 4.8)</span><span>terminal</span></div>
+        <pre>msbuild DatosDINARDAP\DatosDINARDAP.csproj -t:Build -p:Configuration=Release</pre>
+      </div>
+      <div class="code-block">
+        <div class="code-head"><span>Contenido real de bin/Release (verificado en esta sesión)</span><span>4 archivos</span></div>
+        <pre>DatosDINARDAP.dll            <span class="dim-line">← reemplaza la dll actual en cada sistema consumidor</span>
+Newtonsoft.Json.dll           <span class="accent-line">← dependencia NUEVA — antes esta dll no la necesitaba</span>
+DatosDINARDAP.pdb             <span class="dim-line">← opcional, solo para depurar</span>
+DatosDINARDAP.dll.config       <span class="dim-line">← NO se usa tal cual: ver nota abajo</span></pre>
+      </div>
+      <div class="notice warn"><b>Ojo con la configuración:</b> <code class="mono">DatosDINARDAP.dll.config</code> es un archivo auxiliar que genera el build de una librería — en tiempo de ejecución <b>no se lee</b>. Los <code class="mono">appSettings</code> nuevos (<code class="mono">WsUtaDinardapApi.BaseUrl</code>, <code class="mono">.AuthServiceUrl</code>, <code class="mono">.ClientId</code>) hay que copiarlos manualmente dentro del <code class="mono">web.config</code> o <code class="mono">app.config</code> **del sistema consumidor**, apuntando a las URLs reales. Y en ese mismo host, dejar configurada la variable de entorno <code class="mono">WSUTADINARDAP_CLIENT_SECRET</code>.</div>
+      <p><b>Qué subir de verdad:</b> <code class="mono">DatosDINARDAP.dll</code> + <code class="mono">Newtonsoft.Json.dll</code> al <code class="mono">bin\</code> de cada sistema institucional que use esta DLL, más la edición manual de su config como se explica arriba.</p>
+
+      <h3>3 · DatosDINARDAP.Client — no se "sube" a ningún servidor</h3>
+      <div class="code-block">
+        <div class="code-head"><span>Compilar</span><span>terminal</span></div>
+        <pre>cd DatosDINARDAP.Client
+dotnet build -c Release</pre>
+      </div>
+      <p>Esta es una librería para consumidores <b>nuevos</b> en .NET 9 — no corre sola en un servidor. Dos formas de entregarla a un sistema nuevo que la vaya a usar:</p>
+      <div class="grid">
+        <div class="card">
+          <span class="card-title">Mismo repositorio/solución</span>
+          <span class="card-desc">El sistema consumidor agrega una <code class="mono">&lt;ProjectReference&gt;</code> a <code class="mono">DatosDINARDAP.Client.csproj</code> — no hay archivo que copiar, se compila junto.</span>
+        </div>
+        <div class="card">
+          <span class="card-title">Sistema en otro repositorio</span>
+          <span class="card-desc"><code class="mono">dotnet pack -c Release</code> genera un <code class="mono">.nupkg</code> — se publica a un feed NuGet interno (o se referencia por ruta local) y el consumidor hace <code class="mono">dotnet add package</code>.</span>
+        </div>
+      </div>
+
+      <h3>4 · Pruebas — no se despliegan, solo se corren antes de publicar</h3>
+      <div class="code-block">
+        <div class="code-head"><span>Verificación previa a cualquier publicación</span><span>terminal</span></div>
+        <pre>dotnet test tests/WsUtaDinardap.Api.Tests</pre>
       </div>
     </section>
 
