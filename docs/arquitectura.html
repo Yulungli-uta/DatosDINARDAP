@@ -525,6 +525,7 @@ public TCE             DatosTCE(string codigo)            <span class="dim-line"
           </tbody>
         </table>
       </div>
+      <div class="notice">Ya existe <code class="mono">WsUtaDinardap.Api/appsettings.Production.json</code> en el proyecto, listo para copiar al servidor junto con el resto de <code class="mono">publish/</code>. Sigue el mismo patrón que RepositoryUta: <b>no está en git</b> (mismo <code class="mono">.gitignore</code> que excluye todo <code class="mono">appsettings.*.json</code> salvo <code class="mono">.example.json</code>), y los campos de secreto llevan el literal <code class="mono">"VARIABLE_DE_ENTORNO"</code> en vez de un valor — hay que reemplazarlos antes de subirlo, o dejarlos así y setear las variables de entorno reales en el servidor (cualquiera de las dos formas funciona, ASP.NET Core las combina). El único valor que asumí sin confirmación tuya es <code class="mono">AuthService:Url = https://serviciospruebas.uta.edu.ec/WsSeguUta</code> — corrígemelo si el ambiente real es otro.</div>
     </section>
 
     <section id="compilar">
