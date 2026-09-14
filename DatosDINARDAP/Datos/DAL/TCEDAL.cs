@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System;
 
-using DatosDINARDAP.ServiceReferenceDINARDAP;
+using DatosDINARDAP.Datos.Infrastructure;
 using DatosDINARDAP.Datos.Model;
 
 namespace DatosDINARDAP.Datos.DAL
@@ -12,11 +9,11 @@ namespace DatosDINARDAP.Datos.DAL
     {
         string Codigo;
         string Servicio;
-        
+
         /// <summary>
-        /// Construrtor de la clase TCEDAL
+        /// Constructor de la clase TCEDAL
         /// </summary>
-        
+
         public TCEDAL()
         {
             Codigo = "";
@@ -36,51 +33,30 @@ namespace DatosDINARDAP.Datos.DAL
         }
 
         /// <summary>
-        /// Consumo web service TCE
+        /// Consumo de WsUtaDinardap.Api (GET /api/v1/dinardap/tce/{id}). El contrato de TCE
+        /// nunca tuvo campo de error (ver matriz de compatibilidad del analisis) - se preserva
+        /// eso exactamente: exito, sin-datos y falla se ven igual (objeto con defaults) para
+        /// no romper consumidores que ya conviven con esa ambiguedad historica. sufrago=null
+        /// (API nueva, honesto) se colapsa aqui a false para reproducir el default de siempre.
         /// </summary>
-        /// <returns>registro TCE</returns>
-
         public TCE getDatosTCE()
         {
-            TCE datos = new TCE();
+            var datos = new TCE();
 
-            InteroperadorClient cliente = new InteroperadorClient();
-            cliente.ClientCredentials.UserName.UserName = "REDACTED_ROTATE_WITH_DINARDAP";
-            cliente.ClientCredentials.UserName.Password = "REDACTED_ROTATE_WITH_DINARDAP";
-
-            fichaGeneral ficha;
-            string resultado;
             try
             {
-                ficha = cliente.getFichaGeneral(Codigo, Servicio);
+                var dto = DinardapApiClient.GetAsync<TceApiDto>(
+                    "/api/v1/dinardap/tce/" + Uri.EscapeDataString(Codigo)).GetAwaiter().GetResult();
 
-                resultado = "";
-                for (int k = 0; k < ficha.instituciones.Length; k++)
-                    for (int i = 0; i < ficha.instituciones[k].datosPrincipales.Length; i++)
-                    {
-                        switch (ficha.instituciones[k].datosPrincipales[i].codigo)
-                        {
-                            case "44": //Número de certificado
-                                datos.numeroCertificado = ficha.instituciones[k].datosPrincipales[i].valor;
-                                break;
-                            case "45": //fecha que se realizó la votación yyyy/MM/dd
-                                datos.fechaSufragio = new DateTime(Convert.ToInt16(ficha.instituciones[k].datosPrincipales[i].valor.Substring(0, 4)), Convert.ToInt16(ficha.instituciones[k].datosPrincipales[i].valor.Substring(5, 2)), Convert.ToInt16(ficha.instituciones[k].datosPrincipales[i].valor.Substring(8, 2)));
-                                break;
-                            case "46": //nacionalidad
-                                if (ficha.instituciones[k].datosPrincipales[i].valor.Equals("SI"))
-                                    datos.sufrago = true;
-                                else
-                                    datos.sufrago = false;
-                                break;                            
-                            default:
-                                break;
-                        }
-                    }
-
+                datos.numeroCertificado = dto.NumeroCertificado;
+                datos.fechaSufragio = dto.FechaSufragio ?? default(DateTime);
+                datos.sufrago = dto.Sufrago ?? false;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                resultado = "Error " + ex;
+                // Igual que el comportamiento historico: no hay campo de error en TCE, la
+                // falla se ve identica a "sin datos" (objeto con valores default).
+                datos = new TCE();
             }
 
             return datos;

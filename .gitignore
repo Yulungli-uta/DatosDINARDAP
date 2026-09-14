@@ -7,7 +7,8 @@
 ## Visual Studio
 .vs/
 
-## Secrets - nunca versionar
+## Secrets - nunca versionar (appsettings.*.example.json / appsettings.example.json SI se versionan, son plantillas sin secretos)
+appsettings.json
 appsettings.Development.json
 appsettings.Local.json
 appsettings.Production.json

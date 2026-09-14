@@ -45,9 +45,19 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Configuration" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json">
+      <Version>13.0.3</Version>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConsultaDatos.cs" />
+    <Compile Include="Datos\Infrastructure\WsUtaDinardapApiOptions.cs" />
+    <Compile Include="Datos\Infrastructure\DinardapApiClient.cs" />
+    <Compile Include="Datos\Infrastructure\LegacyApiDtos.cs" />
     <Compile Include="Datos\BLL\RegistroCivilBLL.cs" />
     <Compile Include="Datos\BLL\TCEBLL.cs" />
     <Compile Include="Datos\BLL\TitulosBLL.cs" />
