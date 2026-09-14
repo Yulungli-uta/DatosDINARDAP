@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="http://servicio.interoperadorws.interoperacion.dinardap.gob.ec/" xmlns:ns1="http://schemas.xmlsoap.org/soap/http" name="InteroperadorlImplService" targetNamespace="http://servicio.interoperadorws.interoperacion.dinardap.gob.ec/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types>
+    <xs:schema elementFormDefault="unqualified" targetNamespace="http://servicio.interoperadorws.interoperacion.dinardap.gob.ec/" version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+      <xs:element name="getFichaGeneral" type="tns:getFichaGeneral" />
+      <xs:element name="getFichaGeneralResponse" type="tns:getFichaGeneralResponse" />
+      <xs:complexType name="getFichaGeneral">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="numeroIdentificacion" type="xs:string" />
+          <xs:element minOccurs="0" name="codigoPaquete" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="getFichaGeneralResponse">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="return" type="tns:fichaGeneral" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="fichaGeneral">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="codigoPaquete" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="instituciones" nillable="true" type="tns:institucion" />
+          <xs:element minOccurs="0" name="mensaje" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="institucion">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="datosPrincipales" type="tns:datosPrincipales" />
+          <xs:element minOccurs="0" name="detalle" type="tns:detalle" />
+          <xs:element minOccurs="0" name="mensaje" type="xs:string" />
+          <xs:element minOccurs="0" name="nombre" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="datosPrincipales">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="registros" nillable="true" type="tns:registro" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="registro">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="campo" type="xs:string" />
+          <xs:element minOccurs="0" name="codigo" type="xs:string" />
+          <xs:element minOccurs="0" name="valor" type="xs:string" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="detalle">
+        <xs:sequence>
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="items" nillable="true" type="tns:item" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:complexType name="item">
+        <xs:sequence>
+          <xs:element minOccurs="0" name="nombre" type="xs:string" />
+          <xs:element minOccurs="0" maxOccurs="unbounded" name="registros" nillable="true" type="tns:registro" />
+        </xs:sequence>
+      </xs:complexType>
+    </xs:schema>
+  </wsdl:types>
+  <wsdl:message name="getFichaGeneralResponse">
+    <wsdl:part name="parameters" element="tns:getFichaGeneralResponse" />
+  </wsdl:message>
+  <wsdl:message name="getFichaGeneral">
+    <wsdl:part name="parameters" element="tns:getFichaGeneral" />
+  </wsdl:message>
+  <wsdl:portType name="IInteroperador">
+    <wsdl:operation name="getFichaGeneral">
+      <wsdl:input name="getFichaGeneral" message="tns:getFichaGeneral" />
+      <wsdl:output name="getFichaGeneralResponse" message="tns:getFichaGeneralResponse" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="InteroperadorlImplServiceSoapBinding" type="tns:IInteroperador">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="getFichaGeneral">
+      <soap:operation soapAction="" style="document" />
+      <wsdl:input name="getFichaGeneral">
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output name="getFichaGeneralResponse">
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="InteroperadorlImplService">
+    <wsdl:port name="InteroperadorlImplPort" binding="tns:InteroperadorlImplServiceSoapBinding">
+      <!-- <soap:address location="http://interoperabilidad.dinardap.gob.ec:7979/interoperador" /> -->
+      <soap:address location="http://interoperabilidad.dinardap.gob.ec/interoperador"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>
