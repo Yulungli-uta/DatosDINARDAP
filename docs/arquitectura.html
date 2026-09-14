@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Puente DINARDAP — Documentación técnica</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root{
+    --paper:#f6f4ee;
+    --paper-raised:#fbfaf6;
+    --ink:#181c22;
+    --ink-soft:#4c5259;
+    --line:#dcd7c8;
+    --line-strong:#c4beac;
+    --accent:#1f6f78;
+    --accent-ink:#0e3d43;
+    --accent-soft:#dcebe9;
+    --code-bg:#12161c;
+    --code-ink:#dce3e6;
+    --code-dim:#7c8a90;
+    --ok:#2f7d4f;
+    --ok-soft:#e1efe4;
+    --warn:#a8641f;
+    --warn-soft:#f4e6d3;
+    --crit:#a13a3a;
+    --crit-soft:#f5e0df;
+    --font-display:'Spectral', Georgia, 'Times New Roman', serif;
+    --font-body:'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono:'IBM Plex Mono', 'Cascadia Code', Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#14171c;
+      --paper-raised:#1b1f26;
+      --ink:#e7e4da;
+      --ink-soft:#a3a9ac;
+      --line:#30353d;
+      --line-strong:#454c55;
+      --accent:#6cc2c4;
+      --accent-ink:#bfe7e6;
+      --accent-soft:#1d3336;
+      --code-bg:#0b0d11;
+      --code-ink:#d7dee2;
+      --code-dim:#6d7880;
+      --ok:#6fbf8e;
+      --ok-soft:#173226;
+      --warn:#dba15b;
+      --warn-soft:#3a2c17;
+      --crit:#e08585;
+      --crit-soft:#3a2222;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#14171c;
+    --paper-raised:#1b1f26;
+    --ink:#e7e4da;
+    --ink-soft:#a3a9ac;
+    --line:#30353d;
+    --line-strong:#454c55;
+    --accent:#6cc2c4;
+    --accent-ink:#bfe7e6;
+    --accent-soft:#1d3336;
+    --code-bg:#0b0d11;
+    --code-ink:#d7dee2;
+    --code-dim:#6d7880;
+    --ok:#6fbf8e;
+    --ok-soft:#173226;
+    --warn:#dba15b;
+    --warn-soft:#3a2c17;
+    --crit:#e08585;
+    --crit-soft:#3a2222;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-body);
+    font-size:16px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background:var(--accent-soft); color:var(--accent-ink); }
+
+  h1,h2,h3,h4{
+    font-family:var(--font-display);
+    font-weight:600;
+    text-wrap:balance;
+    color:var(--ink);
+    margin:0;
+  }
+  a{ color:var(--accent-ink); }
+  code, .mono{ font-family:var(--font-mono); }
+
+  /* ---------- shell / nav ---------- */
+  .shell{ display:grid; grid-template-columns:250px minmax(0,860px); gap:56px; max-width:1180px; margin:0 auto; padding:0 28px 120px; }
+  @media (max-width:900px){ .shell{ grid-template-columns:1fr; } .toc{ display:none; } }
+
+  header.masthead{
+    max-width:1180px; margin:0 auto; padding:52px 28px 36px;
+    border-bottom:1px solid var(--line);
+  }
+  .eyebrow{
+    font-family:var(--font-mono); font-size:12.5px; letter-spacing:.09em; text-transform:uppercase;
+    color:var(--accent-ink); background:var(--accent-soft); display:inline-flex; align-items:center; gap:8px;
+    padding:5px 10px; border-radius:3px; margin-bottom:18px;
+  }
+  .eyebrow .dot{ width:6px; height:6px; border-radius:50%; background:var(--accent); }
+  h1.title{ font-size:clamp(32px,4.4vw,46px); line-height:1.08; margin-bottom:14px; }
+  .subtitle{ color:var(--ink-soft); font-size:17.5px; max-width:62ch; margin-bottom:26px; }
+  .status-strip{ display:flex; flex-wrap:wrap; gap:10px; }
+  .pill{
+    font-family:var(--font-mono); font-size:12.5px; padding:6px 11px; border-radius:20px;
+    display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line-strong);
+    background:var(--paper-raised); color:var(--ink-soft);
+  }
+  .pill.ok{ border-color:transparent; background:var(--ok-soft); color:var(--ok); }
+  .pill.warn{ border-color:transparent; background:var(--warn-soft); color:var(--warn); }
+  .pill svg{ width:12px; height:12px; }
+
+  nav.toc{ position:sticky; top:40px; align-self:start; padding-top:56px; }
+  nav.toc .toc-label{ font-family:var(--font-mono); font-size:11.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:14px; display:block;}
+  nav.toc ol{ list-style:none; margin:0; padding:0; border-left:1px solid var(--line); }
+  nav.toc li{ margin:0; }
+  nav.toc a{
+    display:block; padding:7px 0 7px 16px; margin-left:-1px; border-left:1px solid transparent;
+    color:var(--ink-soft); text-decoration:none; font-size:14px;
+  }
+  nav.toc a:hover{ color:var(--accent-ink); border-left-color:var(--accent); }
+
+  main{ padding-top:56px; min-width:0; }
+  section{ margin-bottom:64px; scroll-margin-top:24px; }
+  section .kicker{
+    font-family:var(--font-mono); font-size:12px; color:var(--accent-ink); letter-spacing:.08em; text-transform:uppercase;
+    margin-bottom:8px; display:block;
+  }
+  section h2{ font-size:27px; margin-bottom:16px; }
+  section h3{ font-size:19px; margin:28px 0 10px; }
+  section p{ margin:0 0 14px; color:var(--ink); max-width:70ch; }
+  section p.lede{ color:var(--ink-soft); font-size:16.5px; }
+
+  /* ---------- diagram ---------- */
+  .diagram{
+    border:1px solid var(--line); border-radius:8px; background:var(--paper-raised);
+    padding:28px 22px; margin:22px 0; overflow-x:auto;
+  }
+  .diagram svg text{ font-family:var(--font-mono); }
+
+  /* ---------- file tree ---------- */
+  .tree{
+    font-family:var(--font-mono); font-size:13.5px; background:var(--paper-raised); border:1px solid var(--line);
+    border-radius:8px; padding:18px 20px; overflow-x:auto; line-height:1.85;
+  }
+  .tree .dir{ color:var(--accent-ink); font-weight:600; }
+  .tree .new{ color:var(--ok); }
+  .tree .mod{ color:var(--warn); }
+  .tree .dim{ color:var(--code-dim); }
+  .tree .tag{
+    font-size:10.5px; border:1px solid currentColor; border-radius:3px; padding:0 4px; margin-left:8px; letter-spacing:.04em;
+  }
+
+  /* ---------- cards / grid ---------- */
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px; margin:20px 0; }
+  .card{
+    border:1px solid var(--line); border-radius:8px; padding:16px 18px; background:var(--paper-raised);
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .card .card-title{ font-family:var(--font-mono); font-weight:600; font-size:14px; color:var(--accent-ink); }
+  .card .card-desc{ font-size:13.5px; color:var(--ink-soft); }
+
+  /* ---------- tables ---------- */
+  .table-wrap{ overflow-x:auto; border:1px solid var(--line); border-radius:8px; margin:18px 0; }
+  table{ width:100%; border-collapse:collapse; font-size:14.5px; min-width:520px; }
+  thead th{
+    text-align:left; font-family:var(--font-mono); font-size:11.5px; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--ink-soft); padding:11px 14px; border-bottom:1px solid var(--line-strong); background:var(--paper-raised);
+    white-space:nowrap;
+  }
+  tbody td{ padding:11px 14px; border-bottom:1px solid var(--line); vertical-align:top; }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody td code{ font-size:13px; background:var(--accent-soft); color:var(--accent-ink); padding:1px 5px; border-radius:3px; }
+  td.num, th.num{ font-variant-numeric:tabular-nums; text-align:right; }
+
+  /* ---------- code blocks ---------- */
+  .code-block{
+    background:var(--code-bg); color:var(--code-ink); border-radius:8px; margin:16px 0; overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .code-block .code-head{
+    display:flex; align-items:center; justify-content:space-between; padding:9px 14px; font-family:var(--font-mono);
+    font-size:11.5px; color:var(--code-dim); border-bottom:1px solid #23282f; letter-spacing:.04em;
+  }
+  .code-block pre{ margin:0; padding:16px 18px; overflow-x:auto; font-family:var(--font-mono); font-size:13px; line-height:1.65; }
+  .code-block .ok-line{ color:var(--ok); }
+  .code-block .dim-line{ color:var(--code-dim); }
+  .code-block .accent-line{ color:#8fd6d9; }
+
+  /* ---------- badges / status list ---------- */
+  .status-list{ display:flex; flex-direction:column; gap:0; border:1px solid var(--line); border-radius:8px; overflow:hidden; margin:16px 0; }
+  .status-row{ display:flex; align-items:baseline; gap:12px; padding:12px 16px; border-bottom:1px solid var(--line); background:var(--paper-raised); }
+  .status-row:last-child{ border-bottom:none; }
+  .status-row .badge{
+    flex:none; font-family:var(--font-mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.05em;
+    padding:2px 7px; border-radius:3px; font-weight:600;
+  }
+  .badge.done{ background:var(--ok-soft); color:var(--ok); }
+  .badge.pending{ background:var(--warn-soft); color:var(--warn); }
+  .badge.crit{ background:var(--crit-soft); color:var(--crit); }
+  .status-row .status-text{ font-size:14.5px; }
+  .status-row .status-text b{ font-weight:600; }
+
+  /* ---------- notice ---------- */
+  .notice{
+    border-left:3px solid var(--accent); background:var(--accent-soft); border-radius:0 6px 6px 0;
+    padding:14px 18px; font-size:14.5px; color:var(--accent-ink); margin:18px 0;
+  }
+  .notice.warn{ border-left-color:var(--warn); background:var(--warn-soft); color:var(--warn); }
+  .notice b{ color:inherit; }
+
+  .no-shot{
+    border:1px dashed var(--line-strong); border-radius:8px; padding:22px; text-align:center;
+    color:var(--ink-soft); font-size:13.5px; background:var(--paper-raised); margin:16px 0;
+  }
+
+  footer.colophon{
+    max-width:1180px; margin:0 auto; padding:32px 28px 60px; border-top:1px solid var(--line);
+    font-family:var(--font-mono); font-size:12.5px; color:var(--ink-soft); display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <span class="eyebrow"><span class="dot"></span>Documento técnico · Fase de implementación</span>
+  <h1 class="title">Puente DINARDAP</h1>
+  <p class="subtitle">Estructura real dejada en <code class="mono">D:\Git_repository\DatosDINARDAP</code> tras separar el consumo SOAP de DINARDAP en un gateway propio (<code class="mono">WsUtaDinardap.Api</code>), sin romper el contrato público de la DLL legacy que ya consumen los sistemas institucionales.</p>
+  <div class="status-strip">
+    <span class="pill ok">✓ 4 proyectos compilan (dotnet build / MSBuild)</span>
+    <span class="pill ok">✓ 24 / 24 pruebas en verde</span>
+    <span class="pill ok">✓ Permisos + Application creados en WsSegu</span>
+    <span class="pill warn">— Sin prueba en vivo contra DINARDAP real</span>
+    <span class="pill">git 2 commits, sin push</span>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="toc">
+    <span class="toc-label">En este documento</span>
+    <ol>
+      <li><a href="#resumen">Resumen</a></li>
+      <li><a href="#arquitectura">Arquitectura</a></li>
+      <li><a href="#estructura">Estructura de carpetas</a></li>
+      <li><a href="#proyectos">Los 4 proyectos</a></li>
+      <li><a href="#evidencia">Evidencia de build/tests</a></li>
+      <li><a href="#basedatos">Cambios en WsSegu</a></li>
+      <li><a href="#config">Configuración y secretos</a></li>
+      <li><a href="#pendiente">Qué queda pendiente</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section id="resumen">
+      <span class="kicker">01 — Resumen</span>
+      <h2>Qué se construyó y por qué</h2>
+      <p class="lede">El análisis previo encontró credenciales de DINARDAP repetidas en texto plano en 3 archivos, sin control de versiones, y con manejo de errores inconsistente entre los 3 métodos públicos de la DLL. Esta fase implementó la arquitectura propuesta y aprobada.</p>
+      <p>El resultado son <b>4 proyectos</b> dentro de una sola solución (<code class="mono">DatosDINARDAP.sln</code>): un gateway nuevo en .NET 9 que es el único que le habla SOAP a DINARDAP, un cliente HTTP moderno para sistemas nuevos, la DLL legacy reescrita por dentro (mismo contrato público, cero credenciales), y una suite de pruebas que fija el comportamiento de los 3 paquetes (Registro Civil, TCE, Títulos).</p>
+    </section>
+
+    <section id="arquitectura">
+      <span class="kicker">02 — Arquitectura</span>
+      <h2>Flujo de una consulta, de punta a punta</h2>
+      <p class="lede">Dos caminos conviven: el sistema legacy (izquierda) y un consumidor nuevo (derecha). Ambos terminan en el mismo gateway — DINARDAP solo ve una IP, la de <code class="mono">WsUtaDinardap.Api</code>.</p>
+
+      <div class="diagram">
+        <svg viewBox="0 0 920 420" width="100%" role="img" aria-label="Diagrama de flujo entre sistemas legacy, sistemas nuevos, WsUtaDinardap.Api, WsSegu y DINARDAP">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-soft)"></path>
+            </marker>
+          </defs>
+          <style>
+            .box{ fill:var(--paper-raised); stroke:var(--line-strong); stroke-width:1; rx:8; }
+            .box.accent{ stroke:var(--accent); fill:var(--accent-soft); }
+            .lbl{ fill:var(--ink); font-size:13px; font-weight:600; }
+            .sub{ fill:var(--ink-soft); font-size:10.5px; }
+            .edge{ stroke:var(--ink-soft); stroke-width:1.2; fill:none; marker-end:url(#arrow); }
+            .edge-label{ fill:var(--ink-soft); font-size:10px; }
+          </style>
+
+          <!-- Legacy path -->
+          <rect class="box" x="10" y="20" width="170" height="52"></rect>
+          <text class="lbl" x="95" y="42" text-anchor="middle">Sistema legacy</text>
+          <text class="sub" x="95" y="58" text-anchor="middle">new ConsultaDatos()</text>
+
+          <rect class="box" x="10" y="120" width="170" height="52"></rect>
+          <text class="lbl" x="95" y="142" text-anchor="middle">DatosDINARDAP.dll</text>
+          <text class="sub" x="95" y="158" text-anchor="middle">.NET Framework 4.8</text>
+
+          <!-- Modern path -->
+          <rect class="box" x="740" y="20" width="170" height="52"></rect>
+          <text class="lbl" x="825" y="42" text-anchor="middle">Sistema nuevo</text>
+          <text class="sub" x="825" y="58" text-anchor="middle">IDinardapClient</text>
+
+          <rect class="box" x="740" y="120" width="170" height="52"></rect>
+          <text class="lbl" x="825" y="142" text-anchor="middle">DatosDINARDAP.Client</text>
+          <text class="sub" x="825" y="158" text-anchor="middle">.NET 9</text>
+
+          <!-- Center: API -->
+          <rect class="box accent" x="325" y="185" width="270" height="60"></rect>
+          <text class="lbl" x="460" y="209" text-anchor="middle">WsUtaDinardap.Api</text>
+          <text class="sub" x="460" y="226" text-anchor="middle">única IP autorizada por DINARDAP</text>
+
+          <!-- WsSegu -->
+          <rect class="box" x="360" y="20" width="200" height="52"></rect>
+          <text class="lbl" x="460" y="42" text-anchor="middle">WsSegu (RepositoryUta)</text>
+          <text class="sub" x="460" y="58" text-anchor="middle">JWT RS256 + JWKS + permisos</text>
+
+          <!-- DINARDAP -->
+          <rect class="box" x="360" y="330" width="200" height="60"></rect>
+          <text class="lbl" x="460" y="356" text-anchor="middle">DINARDAP</text>
+          <text class="sub" x="460" y="373" text-anchor="middle">SOAP · Basic Auth · TLS</text>
+
+          <!-- edges -->
+          <path class="edge" d="M95,72 L95,120"></path>
+          <path class="edge" d="M180,146 C260,180 300,195 325,208"></path>
+          <text class="edge-label" x="185" y="185">HTTP + Bearer (token técnico)</text>
+
+          <path class="edge" d="M825,72 L825,120"></path>
+          <path class="edge" d="M740,146 C660,180 620,195 595,208"></path>
+          <text class="edge-label" x="640" y="185">HTTP + Bearer</text>
+
+          <path class="edge" d="M95,72 C170,90 320,55 360,46"></path>
+          <text class="edge-label" x="150" y="66">Client Credentials</text>
+
+          <path class="edge" d="M825,72 C740,95 590,55 560,46"></path>
+
+          <path class="edge" d="M460,245 L460,330"></path>
+          <text class="edge-label" x="470" y="292">único gateway SOAP</text>
+        </svg>
+      </div>
+      <p class="lede">El sistema legacy obtiene su propio token vía Client Credentials contra WsSegu (identidad técnica <code class="mono">datosdinardap-legacy</code>); un sistema nuevo reenvía el JWT del usuario o usa su propia identidad técnica. Ninguno de los dos habla SOAP directamente — eso vive únicamente en <code class="mono">DinardapSoapGateway</code>.</p>
+    </section>
+
+    <section id="estructura">
+      <span class="kicker">03 — Estructura</span>
+      <h2>Árbol de carpetas real</h2>
+      <p class="lede">4 proyectos bajo un mismo repositorio git (inicializado en esta fase — antes no existía). <span style="color:var(--ok)">Verde</span> = archivo nuevo. <span style="color:var(--warn)">Ámbar</span> = archivo existente modificado. El resto no se tocó.</p>
+      <div class="tree">
+<span class="dir">DatosDINARDAP/</span> <span class="dim">← raíz del repo (git init en esta fase)</span>
+├── DatosDINARDAP.sln <span class="mod tag">mod</span>
+├── .gitignore <span class="new tag">new</span>
+│
+├── <span class="dir">WsUtaDinardap.Api/</span> <span class="new tag">new · .NET 9</span>
+│   ├── Program.cs
+│   ├── Domain/  <span class="dim">DinardapPackage.cs · DinardapModels.cs · DinardapErrorCode.cs</span>
+│   ├── Application/
+│   │   ├── DinardapService.cs
+│   │   ├── Handlers/  <span class="dim">RegistroCivil · Tce · Titulos PackageHandler.cs</span>
+│   │   ├── Interfaces/  <span class="dim">IDinardapGateway · IDinardapPackageHandler · FichaGeneralDto</span>
+│   │   └── Errors/DinardapException.cs
+│   ├── Infrastructure/
+│   │   ├── Dinardap/  <span class="dim">DinardapOptions · DinardapSoapGateway · InteroperadorProxy</span>
+│   │   ├── Security/  <span class="dim">JwksKeyResolver · UserActionPermissionService · RequirePermission…</span>
+│   │   └── ErrorHandling/DinardapExceptionMiddleware.cs
+│   ├── Endpoints/DinardapEndpoints.cs
+│   └── appsettings.json <span class="dim">(gitignored) · appsettings.example.json (versionado)</span>
+│
+├── <span class="dir">DatosDINARDAP.Client/</span> <span class="new tag">new · .NET 9</span>
+│   ├── IDinardapClient.cs · DinardapClient.cs
+│   ├── IDinardapTokenProvider.cs · BearerTokenHandler.cs
+│   ├── DinardapClientOptions.cs · DinardapClientException.cs
+│   ├── ServiceCollectionExtensions.cs
+│   └── Models/DinardapModels.cs
+│
+├── <span class="dir">DatosDINARDAP/</span> <span class="dim">← legacy, .NET Framework 4.8 (ya existía)</span>
+│   ├── ConsultaDatos.cs <span class="dim">sin cambios (contrato público intacto)</span>
+│   ├── Datos/BLL/ <span class="dim">sin cambios</span>
+│   ├── Datos/DAL/RegistroCivilDAL.cs <span class="mod tag">mod</span>
+│   ├── Datos/DAL/TCEDAL.cs <span class="mod tag">mod</span>
+│   ├── Datos/DAL/TitulosDAL.cs <span class="mod tag">mod</span>
+│   ├── Datos/Infrastructure/ <span class="new tag">new</span>
+│   │   ├── DinardapApiClient.cs
+│   │   ├── WsUtaDinardapApiOptions.cs
+│   │   └── LegacyApiDtos.cs
+│   ├── Datos/Model/ <span class="dim">sin cambios</span>
+│   └── app.config <span class="mod tag">mod</span> <span class="dim">(appSettings nuevo, serviceModel sin tocar)</span>
+│
+└── <span class="dir">tests/WsUtaDinardap.Api.Tests/</span> <span class="new tag">new · xUnit</span>
+    ├── DinardapServiceTests.cs
+    └── PackageHandlers/  <span class="dim">RegistroCivil · Tce · Titulos, 24 casos</span>
+      </div>
+    </section>
+
+    <section id="proyectos">
+      <span class="kicker">04 — Los 4 proyectos</span>
+      <h2>Responsabilidad de cada uno</h2>
+      <div class="grid">
+        <div class="card">
+          <span class="card-title">WsUtaDinardap.Api</span>
+          <span class="card-desc">.NET 9 · se publica en el servidor. Único componente con credenciales/endpoint DINARDAP. Valida JWT localmente (JWKS de WsSegu) y autoriza por permiso.</span>
+        </div>
+        <div class="card">
+          <span class="card-title">DatosDINARDAP.Client</span>
+          <span class="card-desc">.NET 9 · librería para sistemas nuevos. HttpClientFactory + Bearer inyectable. No sabe nada de SOAP ni de DINARDAP directamente.</span>
+        </div>
+        <div class="card">
+          <span class="card-title">DatosDINARDAP</span>
+          <span class="card-desc">.NET Framework 4.8 · misma DLL de siempre para los sistemas institucionales actuales. Por dentro ahora llama HTTP a la API, no SOAP a DINARDAP.</span>
+        </div>
+        <div class="card">
+          <span class="card-title">WsUtaDinardap.Api.Tests</span>
+          <span class="card-desc">xUnit · 24 pruebas sobre el mapeo de campos de los 3 paquetes y el enrutamiento del orquestador, sin red.</span>
+        </div>
+      </div>
+
+      <h3>El único componente que sabe hablar SOAP</h3>
+      <p>Todo lo demás pasa por <code class="mono">IDinardapGateway</code>. Agregar un paquete DINARDAP nuevo (116, 117…) no toca esta clase.</p>
+      <div class="code-block">
+        <div class="code-head"><span>WsUtaDinardap.Api/Infrastructure/Dinardap/DinardapSoapGateway.cs</span><span>C#</span></div>
+        <pre>public sealed class DinardapSoapGateway : IDinardapGateway
+{
+    public async Task&lt;FichaGeneralDto&gt; ConsultarAsync(
+        string numeroIdentificacion, DinardapPackage paquete, CancellationToken ct)
+    {
+        var client = new InteroperadorClient(binding, new EndpointAddress(_options.Endpoint));
+        client.ClientCredentials.UserName.UserName = _options.Username;   <span class="dim-line">// desde entorno, nunca hardcodeado</span>
+        client.ClientCredentials.UserName.Password = _options.Password;
+        <span class="dim-line">// ... try/catch traduce TimeoutException/MessageSecurityException/CommunicationException
+        // a DinardapException con código tipado — nunca deja escapar WCF crudo</span>
+    }
+}</pre>
+      </div>
+
+      <h3>Contrato público de la DLL legacy — intacto</h3>
+      <p>Mismo namespace, misma clase, mismos 3 métodos, mismos tipos de retorno. Un consumidor existente no necesita recompilar.</p>
+      <div class="code-block">
+        <div class="code-head"><span>DatosDINARDAP/ConsultaDatos.cs</span><span>sin cambios</span></div>
+        <pre>public RegistroCivil DatosRegistroCivil(string codigo)   <span class="dim-line">// igual que antes</span>
+public List&lt;Titulos&gt;  DatosTitulos(string codigo)        <span class="dim-line">// igual que antes</span>
+public TCE             DatosTCE(string codigo)            <span class="dim-line">// igual que antes</span></pre>
+      </div>
+    </section>
+
+    <section id="evidencia">
+      <span class="kicker">05 — Verificación</span>
+      <h2>Evidencia real de compilación y pruebas</h2>
+      <p class="lede">No hay interfaz gráfica que capturar — los 4 proyectos son una API, dos librerías y una suite de pruebas. La evidencia real es la salida de compilador y test runner, reproducida tal cual se ejecutó.</p>
+
+      <div class="no-shot">Sin UI web/desktop en este entregable → no hay pantalla que capturar en esta fase. La evidencia verificable es la salida de <code class="mono">dotnet build</code> / <code class="mono">dotnet test</code> / <code class="mono">sqlcmd</code> de abajo, generada en esta misma sesión.</div>
+
+      <div class="code-block">
+        <div class="code-head"><span>MSBuild — solución completa, 4 proyectos</span><span>terminal</span></div>
+        <pre>Versión de MSBuild 17.14.40+3e7442088 para .NET Framework
+
+  WsUtaDinardap.Api -&gt; ...\WsUtaDinardap.Api\bin\Debug\net9.0\WsUtaDinardap.Api.dll
+  DatosDINARDAP.Client -&gt; ...\DatosDINARDAP.Client\bin\Debug\net9.0\DatosDINARDAP.Client.dll
+  DatosDINARDAP -&gt; ...\DatosDINARDAP\bin\Debug\DatosDINARDAP.dll
+  WsUtaDinardap.Api.Tests -&gt; ...\WsUtaDinardap.Api.Tests\bin\Debug\net9.0\WsUtaDinardap.Api.Tests.dll
+<span class="ok-line">Compilación correcta — 0 errores</span></pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head"><span>dotnet test tests/WsUtaDinardap.Api.Tests</span><span>terminal</span></div>
+        <pre>1 archivos de prueba en total coincidieron con el patrón especificado.
+
+<span class="ok-line">Correctas! - Con error: 0, Superado: 24, Omitido: 0, Total: 24</span>, Duración: 18 ms</pre>
+      </div>
+
+      <div class="code-block">
+        <div class="code-head"><span>git log --oneline --all</span><span>DatosDINARDAP</span></div>
+        <pre><span class="accent-line">06e9582</span> Implementa arquitectura propuesta: WsUtaDinardap.Api, DatosDINARDAP.Client, DLL legacy modernizada
+<span class="accent-line">d7b0512</span> Baseline: estado actual de DatosDINARDAP antes del refactor a WsUtaDinardap.Api
+<span class="dim-line">(sin remoto configurado — commits solo locales, sin push)</span></pre>
+      </div>
+
+      <h3>Qué cubren las 24 pruebas</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Archivo</th><th>Casos</th><th>Verifica</th></tr></thead>
+          <tbody>
+            <tr><td><code>RegistroCivilPackageHandlerTests</code></td><td class="num">7</td><td>Mapeo de campos 1–13, separación de apellidos (preposiciones "de/del/la…"), fecha inválida no lanza excepción, ficha vacía → todo null sin excepción</td></tr>
+            <tr><td><code>TcePackageHandlerTests</code></td><td class="num">3</td><td>Sufragó / no sufragó, y el caso "sin dato" ahora honesto (<code>null</code>, no <code>false</code> por defecto)</td></tr>
+            <tr><td><code>TitulosPackageHandlerTests</code></td><td class="num">9</td><td>Clasificación de nivel (2/3/4) para los 6 nombres reales de DINARDAP, fecha corta/ausente, lista vacía nunca null</td></tr>
+            <tr><td><code>DinardapServiceTests</code></td><td class="num">5</td><td>Identificación inválida lanza <code>InvalidIdentification</code>, cada método consulta el paquete correcto, fallas del gateway se propagan tipadas</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="basedatos">
+      <span class="kicker">06 — Autorización</span>
+      <h2>Lo que se creó en la base de datos de WsSegu</h2>
+      <p class="lede">Ejecutado contra <code class="mono">10.102.12.83 / dbutasystem</code> con tu aprobación. Todo aditivo (<code class="mono">INSERT</code>/<code class="mono">MERGE</code>), sin cambios de esquema, verificado por consulta después de correr el script.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Tabla</th><th>Fila creada</th></tr></thead>
+          <tbody>
+            <tr><td><code>auth.tbl_Permissions</code></td><td><code>DINARDAP.REGISTRO_CIVIL.READ</code></td></tr>
+            <tr><td><code>auth.tbl_Permissions</code></td><td><code>DINARDAP.TCE.READ</code></td></tr>
+            <tr><td><code>auth.tbl_Permissions</code></td><td><code>DINARDAP.TITULOS.READ</code></td></tr>
+            <tr><td><code>auth.tbl_Applications</code></td><td><code>datosdinardap-legacy</code> (Client Credentials, IsActive=1)</td></tr>
+            <tr><td><code>auth.tbl_Roles</code></td><td><code>R_DINARDAP_LEGACY</code></td></tr>
+            <tr><td><code>auth.tbl_RolePermissions</code></td><td>3 filas: <code>R_DINARDAP_LEGACY</code> → los 3 permisos DINARDAP</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="notice">Al verificar el mapeo <code class="mono">AppAuth:ClientRoles</code> en <code class="mono">RepositoryUta/Configuration/appsettings.json</code> se encontró ese bloque anidado por error dentro de <code class="mono">Serilog:WriteTo[1]</code> — en esa ruta nunca se leía, así que <code class="mono">uta-signature</code> tampoco recibía su rol ahí. <code class="mono">appsettings.Production.json</code> sí lo tenía bien ubicado (producción no estaba afectada). Se corrigió la posición y se agregó <code class="mono">datosdinardap-legacy → R_DINARDAP_LEGACY</code> en ambos archivos; RepositoryUta recompiló sin errores después del cambio.</div>
+    </section>
+
+    <section id="config">
+      <span class="kicker">07 — Configuración</span>
+      <h2>Qué falta configurar antes de correr esto</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Dónde</th><th>Clave</th><th>Valor</th></tr></thead>
+          <tbody>
+            <tr><td><code>WsUtaDinardap.Api</code></td><td><code>Dinardap:Username</code> / <code>:Password</code></td><td>Variables de entorno — vacías en <code>appsettings.example.json</code> a propósito</td></tr>
+            <tr><td><code>DatosDINARDAP</code> (legacy)</td><td><code>WSUTADINARDAP_CLIENT_SECRET</code></td><td>Variable de entorno del host legacy — secreto entregado fuera de este documento</td></tr>
+            <tr><td>Ambos</td><td><code>AuthService:Url</code> / <code>WsUtaDinardapApi.AuthServiceUrl</code></td><td>URL real de RepositoryUta en cada ambiente</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="pendiente">
+      <span class="kicker">08 — Estado</span>
+      <h2>Qué queda pendiente, a propósito</h2>
+      <div class="status-list">
+        <div class="status-row"><span class="badge done">hecho</span><span class="status-text">Los 4 proyectos compilan juntos y quedaron commiteados localmente (sin push, sin remoto configurado).</span></div>
+        <div class="status-row"><span class="badge done">hecho</span><span class="status-text">Permisos + Application técnica creados y verificados en WsSegu.</span></div>
+        <div class="status-row"><span class="badge pending">pendiente</span><span class="status-text">Prueba en vivo contra DINARDAP real — no se hizo por no tener cédula de prueba autorizada; no es prudente golpear el servicio de gobierno en producción sin ese dato.</span></div>
+        <div class="status-row"><span class="badge pending">pendiente</span><span class="status-text">Publicación de <code class="mono">WsUtaDinardap.Api</code> en el servidor y despliegue — ninguna de las dos se ejecutó en esta sesión.</span></div>
+        <div class="status-row"><span class="badge pending">pendiente</span><span class="status-text">Commit del script SQL corregido y del fix de <code class="mono">appsettings.json</code> dentro de <code class="mono">RepositoryUta</code> — quedaron como cambios sin commitear en ese repo.</span></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="colophon">
+  <span>D:\Git_repository\DatosDINARDAP</span>
+  <span>Puente DINARDAP — documento técnico de implementación</span>
+</footer>
+
+</body>
+</html>
