@@ -26,8 +26,10 @@ appsettings.json
 *.pem
 *.key
 secrets/
-*.local.ps1
-*.secrets.ps1
+
+## Script con credenciales reales (Dinardap + client secret de WsSegu) -
+## nunca versionado, aunque viva dentro de docs/
+docs/configurar-variables-entorno.ps1
 
 ## OS
 Thumbs.db
