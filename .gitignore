@@ -1,19 +1,30 @@
 ## Build outputs
 [Bb]in/
 [Oo]bj/
+publish/
+publish-out/
 *.user
 *.suo
+*.nupkg
 
-## Visual Studio
+## Visual Studio / editores
 .vs/
+.idea/
+.vscode/
 
-## Secrets - nunca versionar (appsettings.*.example.json / appsettings.example.json SI se versionan, son plantillas sin secretos)
+## Secrets - nunca versionar.
+## appsettings.*.json cubre appsettings.json, appsettings.Development.json,
+## appsettings.Production.json, appsettings.Local.json, appsettings.Staging.json,
+## y cualquier variante de ambiente futura - sin tener que listarlas una por una.
+## La unica excepcion es appsettings.example.json (plantilla sin secretos, SI se versiona).
+appsettings.*.json
+!appsettings.example.json
 appsettings.json
-appsettings.Development.json
-appsettings.Local.json
-appsettings.Production.json
+.env
+.env.*
 *.pfx
 *.pem
+*.key
 secrets/
 
 ## OS
